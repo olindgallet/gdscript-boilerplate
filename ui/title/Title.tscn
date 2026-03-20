@@ -1,0 +1,52 @@
+[gd_scene format=3 uid="uid://dbnsqnj3v8ia1"]
+
+[ext_resource type="Texture2D" uid="uid://ctw0xg2eg8uq1" path="res://assets/gfx/title/dicelayer.png" id="1"]
+[ext_resource type="Script" uid="uid://c2rbok0sklo4e" path="res://ui/title/Title.gd" id="2"]
+[ext_resource type="Script" uid="uid://b4up3gm7ujlyx" path="res://ui/title/DiceLayer.gd" id="3"]
+[ext_resource type="Script" uid="uid://beaiawhfy6cdk" path="res://ui/title/CloudLayer.gd" id="4"]
+[ext_resource type="Texture2D" uid="uid://drbx6fqft11hu" path="res://assets/gfx/title/cloudlayer.png" id="5"]
+[ext_resource type="Texture2D" uid="uid://e0ox7m1stjmb" path="res://assets/gfx/title/titletext.png" id="6"]
+[ext_resource type="Texture2D" uid="uid://dj44cuxntujls" path="res://assets/gfx/title/pressstart.png" id="7"]
+
+[node name="Control" type="Node2D" unique_id=1953813818]
+script = ExtResource("2")
+
+[node name="CloudLayer" type="ParallaxBackground" parent="." unique_id=225678848]
+layer = -99
+script = ExtResource("4")
+
+[node name="ParallaxLayer" type="ParallaxLayer" parent="CloudLayer" unique_id=1874640848]
+motion_mirroring = Vector2(1280, 0)
+
+[node name="CloudSprites" type="Sprite2D" parent="CloudLayer/ParallaxLayer" unique_id=1959097740]
+unique_name_in_owner = true
+position = Vector2(640.284, 400.577)
+texture = ExtResource("5")
+
+[node name="DiceLayer" type="ParallaxBackground" parent="." unique_id=1955449125]
+script = ExtResource("3")
+
+[node name="ParallaxLayer" type="ParallaxLayer" parent="DiceLayer" unique_id=961734608]
+motion_mirroring = Vector2(1230, 0)
+
+[node name="DiceSprites" type="Sprite2D" parent="DiceLayer/ParallaxLayer" unique_id=1192434791]
+unique_name_in_owner = true
+position = Vector2(645.024, 400.188)
+scale = Vector2(1.02876, 1)
+texture = ExtResource("1")
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1156604075]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="PressStartText" type="Sprite2D" parent="CenterContainer" unique_id=793343591]
+unique_name_in_owner = true
+modulate = Color(1, 1, 1, 0)
+position = Vector2(494, 404)
+texture = ExtResource("7")
+centered = false
+
+[node name="TitleText" type="Sprite2D" parent="CenterContainer" unique_id=1038107401]
+unique_name_in_owner = true
+position = Vector2(640, -240)
+texture = ExtResource("6")

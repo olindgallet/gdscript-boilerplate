@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://fsfk22ixmgm5"]
+
+[ext_resource type="Texture2D" uid="uid://cw2vfxo6hpq3x" path="res://assets/gfx/tools/gdl.png" id="1"]
+[ext_resource type="Script" uid="uid://trxc2qvxx1rc" path="res://cutscenes/tools/Tools.gd" id="2"]
+
+[node name="Node2D" type="Node2D" unique_id=1484928420]
+script = ExtResource("2")
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1677604771]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="GodotLogo" type="Sprite2D" parent="CenterContainer" unique_id=405076669]
+unique_name_in_owner = true
+modulate = Color(1, 1, 1, 0)
+position = Vector2(648, 400)
+texture = ExtResource("1")

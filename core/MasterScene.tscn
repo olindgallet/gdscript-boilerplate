@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cyo1alst0fgym"]
+
+[ext_resource type="Script" uid="uid://yro7aarjpnan" path="res://core/MasterScene.gd" id="1_i83db"]
+
+[node name="MasterScene" type="Node2D" unique_id=1473896067]
+script = ExtResource("1_i83db")

@@ -1,0 +1,290 @@
+[gd_scene format=3 uid="uid://cf1jdacuqchq"]
+
+[ext_resource type="Texture2D" uid="uid://cxwk71xk7isw0" path="res://assets/gfx/playscreen/PlayerHUD.png" id="1_y6v6y"]
+[ext_resource type="Texture2D" uid="uid://dn4wx0v2r0cvw" path="res://assets/gfx/playscreen/all/dice-1.png" id="2_32xco"]
+[ext_resource type="Texture2D" uid="uid://608ccmqaund6" path="res://assets/gfx/playscreen/GoliathPlayArea.png" id="3_v8l3k"]
+
+[sub_resource type="GDScript" id="GDScript_lcfbb"]
+script/source = "class_name PracticeGame extends Node2D
+
+@export var dice_x: int;
+@export var dice_y: int;
+@export var game_speed: int;
+
+var die_1:Resource = preload(\"res://assets/gfx/playscreen/all/dice-1.png\");
+var die_2:Resource = preload(\"res://assets/gfx/playscreen/all/dice-2.png\");
+var die_3:Resource = preload(\"res://assets/gfx/playscreen/all/dice-3.png\");
+var die_4:Resource = preload(\"res://assets/gfx/playscreen/all/dice-4.png\");
+var die_5:Resource = preload(\"res://assets/gfx/playscreen/all/dice-5.png\");
+var die_6:Resource = preload(\"res://assets/gfx/playscreen/all/dice-6.png\");
+
+var die_1_fade:Resource = preload(\"res://assets/gfx/playscreen/all/dice-fade-1.tres\");
+var die_2_fade:Resource = preload(\"res://assets/gfx/playscreen/all/dice-fade-2.tres\");
+var die_3_fade:Resource = preload(\"res://assets/gfx/playscreen/all/dice-fade-3.tres\");
+var die_4_fade:Resource = preload(\"res://assets/gfx/playscreen/all/dice-fade-4.tres\");
+var die_5_fade:Resource = preload(\"res://assets/gfx/playscreen/all/dice-fade-5.tres\");
+var die_6_fade:Resource = preload(\"res://assets/gfx/playscreen/all/dice-fade-6.tres\");
+
+var die_value: int;
+var die_position: int;
+var dice_table: DiceTable;
+var dice_cache: DiceCache;
+
+@onready var die_sprite:Node = get_node(\"DiceSelection\");
+
+# Called when the node enters the scene tree for the first time.
+func _ready() -> void:
+	self.die_value = 1;
+	self.die_position = 0;
+	self.dice_table = DiceTable.new();
+	self.dice_table.add_row_to_back();
+	self.dice_cache = DiceCache.new();
+	
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+#func _process(delta):
+#	pass
+func _input(event: InputEvent) -> void:
+	if event.is_action_pressed(\"ui_up\"):
+		die_value = die_value + 1;
+		if die_value > 6:
+			die_value = 1;
+		self.draw_die();
+	elif event.is_action_pressed(\"ui_down\"):
+		die_value = die_value - 1;
+		if die_value < 1:
+			die_value = 6;
+		self.draw_die();
+	elif event.is_action_pressed(\"ui_left\") && die_position > 0:
+		print(Routes.path(Routes.Route.TOOLS));
+		print('butts');
+		self.die_position = self.die_position - 1;
+		self.die_sprite.position.x = self.die_sprite.position.x - 50;
+	elif event.is_action_pressed(\"ui_right\") && die_position < 8:
+		self.die_position = die_position + 1;
+		self.die_sprite.position.x = die_sprite.position.x + 50;
+	elif event.is_action_pressed(\"ui_accept\"):
+		self.dice_table.add_row_to_back();
+	elif event.is_action_pressed(\"ui_cancel\"):
+		if self.dice_table.get_die_in_front(self.die_position) == self.die_value:
+			self.dice_table.set_die_in_front(self.die_position, self.die_value * -1);
+			self.dice_cache.add_die(self.die_value);
+			self.draw_cache();
+			if self.dice_table.is_front_row_clear():
+				self.dice_table.remove_front_row();
+			
+
+func _process(_delta: float) -> void:
+	self.draw_dice_table();
+	
+# Draws the dice above the character's head.				
+func draw_die() -> void:
+	if die_value == 6:
+		self.die_sprite.set_texture(die_6);
+	elif die_value == 5:
+		self.die_sprite.set_texture(die_5);
+	elif die_value == 4:
+		self.die_sprite.set_texture(die_4);
+	elif die_value == 3:
+		self.die_sprite.set_texture(die_3);
+	elif self.die_value == 2:
+		self.die_sprite.set_texture(die_2);
+	elif self.die_value == 1:
+		self.die_sprite.set_texture(die_1);
+
+# Clears the dice table.
+func clear_dice_table() -> void:
+	var dice_area:Node = get_node(\"DiceAreaContainer/DiceArea\");
+	for n:Variant in dice_cache.get_children():
+		if n is Sprite2D:
+			dice_area.remove_child(n);
+		elif n is AnimatedSprite2D && n.frame == 2:
+			dice_area.remove_child(n);
+	
+# Redraws the dice table.
+func draw_dice_table() -> void:
+	var x:int = 0;
+	var y:int = 0;
+	
+	self.clear_dice_table();
+	while y < self.dice_table.get_number_of_rows():
+		while x < 9:
+			self.draw_falling_die(x, y, dice_table.get_row(y).get_die(x));
+			if (self.dice_table.get_row(y).get_die(x) < 0):
+				self.dice_table.get_row(y).set_die(x, 0);
+			x = x + 1;
+		x = 0;
+		y = y + 1;
+
+# Draws the wall of falling dice.
+# @param: x the x coordinate of the die
+# @param: y the y coordinate of the die
+# @param: die the value of the die, 1 to 6 inclusive
+func draw_falling_die(x: int, y: int, die: int) -> void:
+	var icon:Variant = Sprite2D.new();
+	icon.position.x = x * 50;
+	icon.position.y = y * 50;
+	icon.centered = false;
+	match die:
+		-1:
+			icon = AnimatedSprite2D.new();
+			icon.position.x = x * 50;
+			
+			icon.position.y = y * 50;
+			icon.centered = false;	
+			icon.set_sprite_frames(self.die_1_fade);
+			get_node(\"DiceAreaContainer/DiceArea\").add_child(icon);		
+			icon.play(\"fade\");
+		
+		-2:
+			icon = AnimatedSprite2D.new();
+			icon.position.x = x * 50;
+			icon.position.y = y * 50;
+			icon.centered = false;	
+			icon.set_sprite_frames(self.die_2_fade);
+			get_node(\"DiceAreaContainer/DiceArea\").add_child(icon);		
+			icon.play(\"fade\");
+			
+		-3:
+			icon = AnimatedSprite2D.new();
+			icon.position.x = x * 50;
+			icon.position.y = y * 50;
+			icon.centered = false;	
+			icon.set_sprite_frames(self.die_3_fade);
+			get_node(\"DiceAreaContainer/DiceArea\").add_child(icon);		
+			icon.play(\"fade\");
+			
+		-4:
+			icon = AnimatedSprite2D.new();
+			icon.position.x = x * 50;
+			icon.position.y = y * 50;
+			icon.centered = false;	
+			icon.set_sprite_frames(self.die_4_fade);
+			get_node(\"DiceAreaContainer/DiceArea\").add_child(icon);		
+			icon.play(\"fade\");
+			
+		-5:
+			icon = AnimatedSprite2D.new();
+			icon.position.x = x * 50;
+			icon.position.y = y * 50;
+			icon.centered = false;	
+			icon.set_sprite_frames(self.die_5_fade);
+			get_node(\"DiceAreaContainer/DiceArea\").add_child(icon);		
+			icon.play(\"fade\");
+			
+		-6:
+			icon = AnimatedSprite2D.new();
+			icon.position.x = x * 50;
+			icon.position.y = y * 50;
+			icon.centered = false;	
+			icon.set_sprite_frames(self.die_6_fade);
+			get_node(\"DiceAreaContainer/DiceArea\").add_child(icon);		
+			icon.play(\"fade\");
+		
+		1:		
+			icon.set_texture(die_1);
+			get_node(\"DiceAreaContainer/DiceArea\").add_child(icon);		
+		
+		2:
+			icon.set_texture(die_2);
+			get_node(\"DiceAreaContainer/DiceArea\").add_child(icon);		
+		
+		3:
+			icon.set_texture(die_3);
+			get_node(\"DiceAreaContainer/DiceArea\").add_child(icon);		
+			
+		4:
+			icon.set_texture(die_4);
+			get_node(\"DiceAreaContainer/DiceArea\").add_child(icon);		
+			
+		5:
+			icon.set_texture(die_5);
+			get_node(\"DiceAreaContainer/DiceArea\").add_child(icon);		
+			
+		6:
+			icon.set_texture(die_6);
+			get_node(\"DiceAreaContainer/DiceArea\").add_child(icon);		
+
+# Draws the wall of falling dice.
+func draw_cache() -> void:
+	var icon : Sprite2D;
+	var i : int = 0;
+	self.clear_cache();
+	
+	while i < self.dice_cache.get_size():
+		icon = Sprite2D.new();
+		icon.position.x = i * 50;
+		icon.position.y = 0;
+		icon.centered = false;
+		match self.dice_cache.get_die(i):
+			1:		
+				icon.set_texture(die_1);
+				get_node(\"CacheContainer/Cache\").add_child(icon);		
+			
+			2:
+				icon.set_texture(die_2);
+				get_node(\"CacheContainer/Cache\").add_child(icon);		
+			
+			3:
+				icon.set_texture(die_3);
+				get_node(\"CacheContainer/Cache\").add_child(icon);		
+				
+			4:
+				icon.set_texture(die_4);
+				get_node(\"CacheContainer/Cache\").add_child(icon);		
+				
+			5:
+				icon.set_texture(die_5);
+				get_node(\"CacheContainer/Cache\").add_child(icon);		
+				
+			6:
+				icon.set_texture(die_6);
+				get_node(\"CacheContainer/Cache\").add_child(icon);		
+		i = i + 1;
+# Clears the cache of dice.
+func clear_cache() -> void:
+	var cache:Node = get_node(\"CacheContainer/Cache\");
+	for n:Variant in cache.get_children():
+		cache.remove_child(n);
+"
+
+[node name="SinglePlayerScreen" type="Node2D" unique_id=481852531]
+script = SubResource("GDScript_lcfbb")
+dice_x = 280
+dice_y = 500
+
+[node name="HUD" type="Sprite2D" parent="." unique_id=644220404]
+z_index = -5
+position = Vector2(1120, 360)
+texture = ExtResource("1_y6v6y")
+
+[node name="DiceSelection" type="Sprite2D" parent="." unique_id=966257648]
+position = Vector2(255, 550)
+texture = ExtResource("2_32xco")
+centered = false
+
+[node name="ArenaBackground" type="Sprite2D" parent="." unique_id=444500557]
+z_index = -5
+position = Vector2(480, 361)
+texture = ExtResource("3_v8l3k")
+
+[node name="DiceAreaContainer" type="SubViewportContainer" parent="." unique_id=2026406016]
+offset_left = 255.0
+offset_right = 705.0
+offset_bottom = 550.0
+
+[node name="DiceArea" type="SubViewport" parent="DiceAreaContainer" unique_id=1994118998]
+handle_input_locally = false
+size = Vector2i(450, 550)
+render_target_update_mode = 4
+
+[node name="CacheContainer" type="SubViewportContainer" parent="." unique_id=1776182450]
+offset_left = 1002.27
+offset_top = 383.888
+offset_right = 1252.27
+offset_bottom = 433.888
+
+[node name="Cache" type="SubViewport" parent="CacheContainer" unique_id=1893881882]
+transparent_bg = true
+handle_input_locally = false
+size = Vector2i(250, 50)
+render_target_update_mode = 4
